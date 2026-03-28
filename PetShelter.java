@@ -40,7 +40,7 @@ private static void mainMenu() {
     switch (input) {
       case "1": viewAvailableAnimals(); break;
       case "2": bookVisit(); break;
-      case "3": submitAdoption(); break;
+      case "3": submitAdoptionApplication(); break;
       case "4": reviewApplication(); break;
       case "5": showDonorSummary(); break;
       case "6":
@@ -52,7 +52,20 @@ private static void mainMenu() {
   }
 }
 
-//option 1 - 3
+//option 1
+private static void viewAvailableAnimals() {
+  System.out.println("Not implemented yet.");
+}
+ 
+//option 2
+private static void bookVisit() {
+  System.out.println("Not implemented yet.");
+}
+
+// option 3 
+private static void submitAdoptionApplication() {
+  System.out.println("Not implemented yet.");
+}
 
 //option 4
 private static void reviewApplication() {
@@ -62,7 +75,10 @@ private static void reviewApplication() {
     String query = "SELECT app_id, submission_date, status, email, animal_id " +
     "FROM AdoptionApplication ORDER BY app_id";
 
+    // to run SQl
     Statement statement = conn.createStatement();
+
+    // to store the results of query execution
     ResultSet queryOutput = statement.executeQuery(query);
 
     System.out.println("\nApplications:");
@@ -71,6 +87,7 @@ private static void reviewApplication() {
     
     boolean applicationFound = false;
 
+    // loop through each row in the output 
     while(queryOutput.next()) {
       applicationFound = true;
 
@@ -83,6 +100,7 @@ private static void reviewApplication() {
     );
   }
 
+    // if no applications found in system
     if (!applicationFound) {
       System.out.println("No applications found.");
       return;
@@ -111,7 +129,7 @@ private static void reviewApplication() {
     PreparedStatement p1 = conn.prepareStatement(insertionQuery);
     PreparedStatement p2 = conn.prepareStatement(updateQuery);
 
-    //Insert data inot ReviewsApplication
+    //Insert data into ReviewsApplication
     p1.setInt(1, appId);
     p1.setString(2, adminEmail);
     p1.setDate(3, Date.valueOf(reviewDate));
@@ -136,21 +154,53 @@ private static void reviewApplication() {
   }
 }
 
-private static void viewAvailableAnimals() {
-  System.out.println("Not implemented yet.");
-}
-
-private static void bookVisit() {
-  System.out.println("Not implemented yet.");
-}
-
-private static void submitAdoption() {
-  System.out.println("Not implemented yet.");
-}
-
+//option 5
 private static void showDonorSummary() {
-  System.out.println("Not implemented yet.");
+  try {
+    // Query to get the total donation amount per person
+    String query = "SELECT P.full_name, P.email, SUM(D.amount) as total_donated " +
+    "FROM Person P " +
+    "JOIN Donations D ON P.email = D.email " +
+    "GROUP BY P.full_name, P.email " +
+    "ORDER BY total_donated DESC" ;
+
+    Statement statement = conn.createStatement();
+    ResultSet queryOutput = statement.executeQuery(query); 
+
+    System.out.println("\nDonor Summary:");
+    System.out.println("Name | Email | Total Donated");
+    System.out.println("--------------------------------");
+    
+    boolean donationsFound = false;
+
+    // loop through each row of the output from query exection
+    while(queryOutput.next()) {
+
+      donationsFound = true;
+
+      System.out.println(
+        queryOutput.getString("full_name") + " | " +
+        queryOutput.getString("email") + " | " +
+        queryOutput.getDouble("total_donated")
+      );
+
+      // if no donations found
+  
+    }
+
+    if(!donationsFound) {
+      System.out.println("No donations found");
+    }
+
+    queryOutput.close();
+    statement.close();
+
+  } catch (Exception e) {
+    System.out.println("Error retrieving donor summary. Please try again.: " + e.getMessage());
+
+  }
 }
+
 
 
 }
