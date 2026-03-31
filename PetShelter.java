@@ -442,22 +442,52 @@ private static void reviewApplication() {
     System.out.print("Enter new status (Submitted / Under Review / Approved / Rejected): ");
     String updatedStatus = scanner.nextLine();
 
-    String insertionQuery = "INSERT INTO ReviewsApplication (app_id, email, review_date) VALUES (?, ?, ?)";
+    // Check if record already exists in ReviewsApplication
+    String checkQuery =
+    "SELECT COUNT(*) AS review_count FROM ReviewsApplication WHERE app_id = ? AND email = ?";
+    PreparedStatement checkStatement = conn.prepareStatement(checkQuery);
+    checkStatement.setInt(1, appId);
+    checkStatement.setString(2, adminEmail);
+
+    ResultSet checkResult = checkStatement.executeQuery();
+    checkResult.next();
+    int reviewCount = checkResult.getInt("review_count");
+
+    //if no records exists for the (appID,adminEmail)
+    if (reviewCount == 0) {
+      String insertionQuery =
+      "INSERT INTO ReviewsApplication (app_id, email, review_date) VALUES (?, ?, ?)";
+      
+      PreparedStatement p1 = conn.prepareStatement(insertionQuery);
+
+      p1.setInt(1, appId);
+      p1.setString(2, adminEmail);
+      p1.setDate(3, Date.valueOf(reviewDate));
+      p1.executeUpdate();
+      p1.close();
+      System.out.println("New review application record inserted.");
+  } else {
+    // update review date of exisiting application being reviewed
+    String updateReviewDateQuery =
+    "UPDATE ReviewsApplication SET review_date = ? WHERE app_id = ? AND email = ?";
+
+    PreparedStatement p3 = conn.prepareStatement(updateReviewDateQuery);
+    p3.setDate(1, Date.valueOf(reviewDate));
+    p3.setInt(2, appId);
+    p3.setString(3, adminEmail);
+    p3.executeUpdate();
+    p3.close();
+
+    System.out.println("Existing review found. Review date updated.");
+  }
+
 
     //Modification: Animal Status
     String updateQuery = "UPDATE AdoptionApplication SET status = ? WHERE app_id = ?";
 
     //Placeholders replacement
 
-    PreparedStatement p1 = conn.prepareStatement(insertionQuery);
     PreparedStatement p2 = conn.prepareStatement(updateQuery);
-
-    //Insert data into ReviewsApplication
-    p1.setInt(1, appId);
-    p1.setString(2, adminEmail);
-    p1.setDate(3, Date.valueOf(reviewDate));
-
-    p1.executeUpdate();
 
     //Update status in adoption applications
     p2.setString(1, updatedStatus);
@@ -469,7 +499,6 @@ private static void reviewApplication() {
 
     queryOutput.close();
     statement.close();
-    p1.close();
     p2.close();
 
   } catch (Exception e) {
